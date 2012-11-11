@@ -11,6 +11,7 @@
 # Logs and databases #
 ######################
 *.log
+*.jpg
 
 # OS generated files #
 ######################
