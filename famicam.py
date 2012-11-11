@@ -5,6 +5,8 @@ import os
 from PIL import Image, ImageStat
 from StringIO import StringIO
 import math
+import twitter
+from imgur import UploadImage as U
 
 # Settings
 camera_ip = "localhost:8080"
@@ -40,59 +42,33 @@ if len(imglist) > 0:    #If we've got pictures to handle...
     width = imglist[0].size[0]
     canvas_width = width*len(imglist) #Total width of all pictures
     
-    blank_image = Image.new("RGB", (canvas_width,height)) #Create a new canvas wide enough to put all of our pictures.
+    canvas_image = Image.new("RGB", (canvas_width,height)) #Create a new canvas wide enough to put all of our pictures.
     bright_values = []
 
     for index, img in enumerate(imglist):               #Put together whole image, store some brightness values.
         bright_values.append(brightness(img))
-        blank_image.paste(img, (width*index,0))
-    bright_values.append(brightness(blank_image))       #Bright values can be used later for additional logic.
+        canvas_image.paste(img, (width*index,0))
+    bright_values.append(brightness(canvas_image))       #Bright values can be used later for additional logic.
                                                         #bright_values[-1] is all images.
 
-    print bright_values
-    blank_image.show()
-    #blank_image.save("lastimage.jpg")
-
-"""
-    bwimg = cv.LoadImage(source, 0)
-    img = cv.LoadImage(source)
-"""
-
-"""
-# Create pygame surfaces for bitblitting
-    pygameimg = img.tostring()
-    with_laughingman = image.fromstring(pygameimg, (WIDTH,HEIGHT), "RGB")
+    print bright_values #19-22 when lights are off at night.
     
-    # Detect faces and bitblit the laughingman
-    faces = cv.HaarDetectObjects(bwimg, hc, cv.CreateMemStorage())
-    for (fx,fy,fw,fh),n in faces:
-        (x,y,w,h) = (fx-10, fy-10, fw+20, fh+20)
-	laughingman_scaled = scale(laughingman, (w,h))
-        with_laughingman.blit(laughingman_scaled, (x,y))
+    #canvas_image.show()
+    canvas_image.save("lastimage.jpg")
 
-    # Save the image
-    image.save(with_laughingman, source)
+    imgur_upload = U("lastimage.jpg") #Upload the image, assign return data to variable.
 
-    tweet = "Total people found in view ("+str(index+1)+"): "+str(len(faces))
+    lines = [line.strip() for line in open('config.txt')] #open a config file, so we can stuff secrets into them without them being accidentally sent to github
 
-    print tweet	
+    #TWITTER
+    app_key = lines[0]
+    app_secret = lines[1]
+    oauth_token = lines[2]
+    oauth_token_secret = lines[3]
 
-"""
-"""
-    if darkcount > (.7 * (sizex * sizey)):
-        print "Image is dark. Not sending data."
-    else:
-        print "Image is light. Sending data."
-	
-        if len(faces) > 0:
-	        try:
-		        imgapi = imgur.imgur(apikey=imgur_api_key)
-		        imgurl = imgapi.upload(stamp+".jpg")
-		        api = twitter.Api(username=twitter_user, password=twitter_pass)
-		        status = api.PostUpdate(tweet+" "+imgurl['rsp']['image']['original_image'])
-	        except:
-		        print "Failed!"
-				
-    # Clean up our mess
-"""
-    #os.remove(source)
+famitwitter = twitter.Api(consumer_key=app_key,
+                  consumer_secret=app_secret,
+                  access_token_key=oauth_token,
+                  access_token_secret=oauth_token_secret)
+
+famitwitter.PostUpdate(imgur_upload.imageURL) #Post the Oooarelll...
