@@ -2,8 +2,9 @@ import sys
 import urllib
 import time
 import os
-from PIL import Image
+from PIL import Image, ImageStat
 from StringIO import StringIO
+import math
 
 # Settings
 camera_ip = "localhost:8080"
@@ -15,32 +16,43 @@ views = ["9ff,4ff,24","6ff,4ff,24","3ff,4ff,24", "ff,2ff,24"]
 stamp = time.strftime("%y%d%m%H%M%S",time.localtime())
 imglist = [] #Temp list to hold all of our images while we manage them.
 
+
+def brightness(im_file):
+   stat = ImageStat.Stat(im_file)
+   r,g,b = stat.mean
+   return math.sqrt(0.241*(r**2) + 0.691*(g**2) + 0.068*(b**2))
+
+
 # Loop over the views
-for index, v in enumerate(views):
+for v in views:
     # Pan the camera to the view
     params = urllib.urlencode({'AbsolutePanTilt': v})
     f = urllib.urlopen("http://"+camera_ip+"/command/ptzf.cgi", params)
     f.read()
     
-    # Collect image (color, and black and white versions)
     source = os.path.join('./', stamp + '.jpg') 
     data = Image.open(StringIO(urllib.urlopen("http://"+camera_ip+"/oneshotimage.jpg").read()))
 
     imglist.append(data)
 
-if len(imglist) > 0: #If we've got pictures to handle...
+if len(imglist) > 0:    #If we've got pictures to handle...
     height = imglist[0].size[1]
     width = imglist[0].size[0]
-    
     canvas_width = width*len(imglist) #Total width of all pictures
     
-blank_image = Image.new("RGB", (canvas_width,height)) #Create a new canvas wide enough to put all of our pictures.
+    blank_image = Image.new("RGB", (canvas_width,height)) #Create a new canvas wide enough to put all of our pictures.
+    bright_values = []
 
-for index, img in enumerate(imglist):
-    blank_image.paste(img, (width*index,0))
+    for index, img in enumerate(imglist):               #Put together whole image, store some brightness values.
+        bright_values.append(brightness(img))
+        blank_image.paste(img, (width*index,0))
+    bright_values.append(brightness(blank_image))       #Bright values can be used later for additional logic.
+                                                        #bright_values[-1] is all images.
 
-blank_image.show()
-blank_image.save("lastimage.jpg")
+    print bright_values
+    blank_image.show()
+    #blank_image.save("lastimage.jpg")
+
 """
     bwimg = cv.LoadImage(source, 0)
     img = cv.LoadImage(source)
