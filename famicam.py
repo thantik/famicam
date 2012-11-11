@@ -10,13 +10,12 @@ camera_ip = "localhost:8080"
 twitter_user = ""
 twitter_pass = ""
 imgur_api_key = ""
-WIDTH = 640
-HEIGHT = 480
+views = ["9ff,4ff,24","6ff,4ff,24","3ff,4ff,24", "ff,2ff,24"]
 
 stamp = time.strftime("%y%d%m%H%M%S",time.localtime())
+imglist = [] #Temp list to hold all of our images while we manage them.
 
 # Loop over the views
-views = ["9ff,4ff,24","6ff,4ff,24","3ff,4ff,24", "ff,2ff,24"]
 for index, v in enumerate(views):
     # Pan the camera to the view
     params = urllib.urlencode({'AbsolutePanTilt': v})
@@ -25,10 +24,23 @@ for index, v in enumerate(views):
     
     # Collect image (color, and black and white versions)
     source = os.path.join('./', stamp + '.jpg') 
-    data = StringIO(urllib.urlopen("http://"+camera_ip+"/oneshotimage.jpg").read())
+    data = Image.open(StringIO(urllib.urlopen("http://"+camera_ip+"/oneshotimage.jpg").read()))
 
-    tempimage = Image.open(data)
-    tempimage.show()
+    imglist.append(data)
+
+if len(imglist) > 0: #If we've got pictures to handle...
+    height = imglist[0].size[1]
+    width = imglist[0].size[0]
+    
+    canvas_width = width*len(imglist) #Total width of all pictures
+    
+blank_image = Image.new("RGB", (canvas_width,height)) #Create a new canvas wide enough to put all of our pictures.
+
+for index, img in enumerate(imglist):
+    blank_image.paste(img, (width*index,0))
+
+blank_image.show()
+blank_image.save("lastimage.jpg")
 """
     bwimg = cv.LoadImage(source, 0)
     img = cv.LoadImage(source)
