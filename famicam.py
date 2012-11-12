@@ -10,10 +10,7 @@ from imgur import UploadImage as U
 
 # Settings
 camera_ip = "localhost:8080"
-twitter_user = ""
-twitter_pass = ""
-imgur_api_key = ""
-views = ["9ff,4ff,24","6ff,4ff,24","3ff,4ff,24", "ff,2ff,24"]
+views = ["ebe1,05d8,24","f53e,05d8,24","fe68,05d8,24", "09f6,05d8,24", "141f,05d8,24"]
 
 stamp = time.strftime("%y%d%m%H%M%S",time.localtime())
 imglist = [] #Temp list to hold all of our images while we manage them.
@@ -32,10 +29,14 @@ for v in views:
     f = urllib.urlopen("http://"+camera_ip+"/command/ptzf.cgi", params)
     f.read()
     
-    source = os.path.join('./', stamp + '.jpg') 
+    #source = os.path.join('./', stamp + '.jpg') 
     data = Image.open(StringIO(urllib.urlopen("http://"+camera_ip+"/oneshotimage.jpg").read()))
 
-    imglist.append(data)
+    imglist.append(data) #Get all images quickly, save them to a list.
+    #Might need to add a delay so the camera decelerates
+    #to the same position every time.
+    #Also, need to add error checking.
+
 
 if len(imglist) > 0:    #If we've got pictures to handle...
     height = imglist[0].size[1]
@@ -51,24 +52,27 @@ if len(imglist) > 0:    #If we've got pictures to handle...
     bright_values.append(brightness(canvas_image))       #Bright values can be used later for additional logic.
                                                         #bright_values[-1] is all images.
 
-    print bright_values #19-22 when lights are off at night.
+    #print bright_values #19-22 when lights are off at night.
+    #canvas_image.show() #for debugging
     
-    #canvas_image.show()
-    canvas_image.save("lastimage.jpg")
+    if bright_values[-1] > 60:
+        print "People are at the lab!"
 
-    imgur_upload = U("lastimage.jpg") #Upload the image, assign return data to variable.
+        canvas_image.save("lastimage.jpg")
 
-    lines = [line.strip() for line in open('config.txt')] #open a config file, so we can stuff secrets into them without them being accidentally sent to github
+        imgur_upload = U("lastimage.jpg") #Upload the image, assign return data to variable.
 
-    #TWITTER
-    app_key = lines[0]
-    app_secret = lines[1]
-    oauth_token = lines[2]
-    oauth_token_secret = lines[3]
+        lines = [line.strip() for line in open('config.txt')] #open a config file, so we can stuff secrets into them without them being accidentally sent to github
 
-famitwitter = twitter.Api(consumer_key=app_key,
-                  consumer_secret=app_secret,
-                  access_token_key=oauth_token,
-                  access_token_secret=oauth_token_secret)
+        #TWITTER
+        app_key = lines[0]
+        app_secret = lines[1]
+        oauth_token = lines[2]
+        oauth_token_secret = lines[3]
 
-famitwitter.PostUpdate(imgur_upload.imageURL) #Post the Oooarelll...
+        famitwitter = twitter.Api(consumer_key=app_key,
+                                  consumer_secret=app_secret,
+                                  access_token_key=oauth_token,
+                                  access_token_secret=oauth_token_secret)
+
+        famitwitter.PostUpdate(imgur_upload.imageURL) #Post the Oooarelll...
