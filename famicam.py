@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import sys
 import urllib
 import time
@@ -29,6 +31,7 @@ for v in views:
     f = urllib.urlopen("http://"+camera_ip+"/command/ptzf.cgi", params)
     f.read()
     
+    time.sleep(0.2)
     #source = os.path.join('./', stamp + '.jpg') 
     data = Image.open(StringIO(urllib.urlopen("http://"+camera_ip+"/oneshotimage.jpg").read()))
 
@@ -36,6 +39,10 @@ for v in views:
     #Might need to add a delay so the camera decelerates
     #to the same position every time.
     #Also, need to add error checking.
+
+params = urllib.urlencode({'AbsolutePanTilt': views[0]})
+f = urllib.urlopen("http://"+camera_ip+"/command/ptzf.cgi", params)
+f.read()
 
 
 if len(imglist) > 0:    #If we've got pictures to handle...
